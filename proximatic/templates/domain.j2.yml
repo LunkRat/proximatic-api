@@ -1,0 +1,30 @@
+http:
+  routers:
+    {{ subdomain }}:
+      entryPoints:
+        - "websecure"
+      rule: "Host(`{{ subdomain }}.{{ proximatic_fqdn }}`)"
+      middlewares:
+        - default-headers
+      tls:
+        {}
+      service: {{ subdomain }}
+
+  services:
+    {{ subdomain }}:
+      loadBalancer:
+        servers:
+          - url: "{{ url }}"
+        passHostHeader: false
+
+  middlewares:
+
+    default-headers:
+      headers:
+        frameDeny: true
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true

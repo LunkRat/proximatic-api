@@ -33,4 +33,8 @@ def domain_list(id: str = None):
         table = tabulate_resources(response)
         typer.echo(table)
     else:
-        typer.echo(response.errors)
+        typer.echo(response.error)
+
+@app.command()
+def domain_save():
+    proximatic.domain_save()

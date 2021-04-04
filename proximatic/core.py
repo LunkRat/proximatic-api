@@ -4,8 +4,8 @@ import requests
 from pathlib import Path
 from jinja2 import Environment, PackageLoader
 from tabulate import tabulate
-from .models import (SystemConfigModel, DomainModel, ResponseModel, AttributesModel, 
-                    ErrorsModel, ResourceModel, RouterModel, ServiceModel,
+from .models import (SystemConfigModel, DomainAttributesModel, ResponseModel,
+                    ResponseErrorModel, ResourceModel, RouterModel, ServiceModel,
                     MiddleWaresModel, LoadBalancerModel)
 
 class Proximatic:
@@ -34,26 +34,39 @@ class Proximatic:
             with open(filename, "r") as yml_stream:
                 config = yaml.safe_load(yml_stream)
                 if 'http' in config and 'services' in config['http']:
-                    domain = DomainModel()
-                    for service, settings in config['http']['services'].items():
-                        domain.id = service
-                        loadbalancer = LoadBalancerModel(
-                            servers = settings['loadBalancer']['servers']
+                    router_id = list(config['http']['routers'].keys())[0]
+                    service_id = config['http']['routers'][router_id]['service']
+
+                    loadbalancer = LoadBalancerModel(
+                            servers = config['http']['services'][service_id]['loadBalancer']['servers']
                         )
-                        service = ServiceModel(
-                            id=service,
-                            loadBalancer=loadbalancer
+
+                    service = ServiceModel(
+                        id=service_id,
+                        loadBalancer=loadbalancer
+                        )
+
+                    router = RouterModel(
+                            id=router_id,
+                            entryPoints=config['http']['routers'][router_id]['entryPoints'],
+                            rule=config['http']['routers'][router_id]['rule'],
+                            middlewares=config['http']['routers'][router_id]['middlewares'],
+                            service=service_id
                             )
-                        domain.services.append(service)
-                    for router, settings in config['http']['routers'].items():
-                        router = RouterModel(
-                            id=router,
-                            entryPoints=settings['entryPoints'],
-                            rule=settings['rule'],
-                            middlewares=settings['middlewares'],
-                            service_id=settings['service']
-                            )
-                        domain.routers.append(router)
+
+                    attributes = DomainAttributesModel(
+                        router=router,
+                        service=service,
+                        endpoint=router.rule.split("`")[1],
+                        server=service.loadBalancer.servers[0]['url']
+                    )
+                    
+                    domain = ResourceModel(
+                        id=router_id,
+                        type="domain",
+                        attributes=attributes
+                    )
+
                     self.system.domains.append(domain)
         return self.system
 
@@ -77,21 +90,17 @@ class Proximatic:
             domains = self.system.domains
         try:
             for domain in domains:
-                attributes = AttributesModel(
-                    endpoint=domain.routers[0].rule.split("`")[1],
-                    server=domain.services[0].loadBalancer.servers[0]['url']
-                    )
-                resource = ResourceModel(
-                    id=domain.id,
-                    type='domain',
-                    attributes=attributes
-                    )
-                resources.append(resource)
+                resources.append(domain)
             response.data = resources
         except Exception as e:
-            response.errors = ErrorsModel(id="changeme", detail=e)
+            response.error = [ResponseErrorModel(id="changeme", detail=str(e))]
         return response
 
+    def domain_save(self, id: str=None) -> ResponseModel:
+        file_path = '/data/traefik/conf/mydomain.yml'
+        with open(file_path, "w") as fh:  
+            yaml.dump(self.system.domains[0].dict(), fh)
+            return ResponseModel()
 
 
     def domain_add(self, id: str, server: str):
@@ -124,4 +133,3 @@ class Proximatic:
         # yml_file.close()
         
         # return response
-        

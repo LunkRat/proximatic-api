@@ -36,5 +36,9 @@ def domain_list(id: str = None):
         typer.echo(response.error)
 
 @app.command()
-def domain_save():
-    proximatic.domain_save()
+def domain_export(id: str):
+    domain = proximatic.domain_fetch(id)
+    response = proximatic.domain_export(domain)
+    table = tabulate_resources(response)
+    typer.echo(f"Domain {id} successfully saved:")
+    typer.echo(table)

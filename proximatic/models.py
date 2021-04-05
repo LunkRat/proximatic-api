@@ -37,6 +37,11 @@ class MiddleWaresModel(BaseModel):
       }
     }
 
+class DomainExportModel(BaseModel):
+    http: Dict[str, dict] = {
+        "routers": {},
+        "services": {}
+    }
 
 class DomainAttributesModel(BaseModel):
     router: RouterModel = None

@@ -6,7 +6,7 @@ from jinja2 import Environment, PackageLoader
 from tabulate import tabulate
 from .models import (SystemConfigModel, DomainAttributesModel, ResponseModel,
                     ResponseErrorModel, ResourceModel, RouterModel, ServiceModel,
-                    MiddleWaresModel, LoadBalancerModel)
+                    MiddleWaresModel, LoadBalancerModel, DomainExportModel)
 
 class Proximatic:
     """The proximatic core engine."""
@@ -79,8 +79,8 @@ class Proximatic:
 
     def domain_list(self, id: str=None) -> ResponseModel:
         """
-        Searches the config yml directory and returns a ResponseModel
-        containing all Domain resources discovered in the files.
+        Returns a ResponseModel containing all Domain resources 
+        discovered in the active config.
         """
         response = ResponseModel()
         resources = []
@@ -96,40 +96,24 @@ class Proximatic:
             response.error = [ResponseErrorModel(id="changeme", detail=str(e))]
         return response
 
-    def domain_save(self, id: str=None) -> ResponseModel:
-        file_path = '/data/traefik/conf/mydomain.yml'
-        with open(file_path, "w") as fh:  
-            yaml.dump(self.system.domains[0].dict(), fh)
-            return ResponseModel()
+    def domain_fetch(self, id: str) -> ResourceModel:
+        fetch = [domain for domain in self.system.domains if domain.id == id]
+        domain = fetch[0]
+        return domain
 
-
-    def domain_add(self, id: str, server: str):
-
-        pass
-        # Check the URL for validity by visiting it and
-        # expecting a 200 response code from its server.
-        # try:
-        #     result = requests.get(server).status_code
-        #     if result != 200:
-        #         return {
-        #             "Error": "Invalid URL"
-        #         }  # @todo define some reusable error response payloads.
-        # except Exception as e:
-        #     return {"error": "Invalid URL", "msg": str(e)}
-
-        # # Load Jinja2 template engine.
-        # env = Environment(loader=PackageLoader("proximatic", "templates"))
-        # template = env.get_template("domain.j2.yml")
-        # # Use template to generate a string of YAML containing valid Traefik config.
-        # yml_string = template.render(
-        #     id=id,
-        #     fqdn=self.system.fqdn,
-        #     server=server,
-        # )
-        # # Write the YAML to a .yml file named after the id.
-        # yml_file_path = self.system.yml_path + id + ".yml"
-        # yml_file = open(yml_file_path, "wt")
-        # lines_written = yml_file.write(yml_string)
-        # yml_file.close()
-        
-        # return response
+    def domain_export(self, domain: ResourceModel) -> ResponseModel:
+        response = ResponseModel()
+        if domain.type != "domain":
+            error = ResponseErrorModel(
+                id="Invalid type.",
+                detail="We need a better error system."
+            )
+            response.error.append(error)
+            return response
+        file_path = self.system.yml_path.joinpath(domain.id + ".yml")
+        export = DomainExportModel()
+        export.http['routers'][domain.id] = domain.attributes.router
+        export.http['services'][domain.id] = domain.attributes.service
+        with open(file_path, "wt") as fh:
+            yaml.dump(export.dict(), fh)
+        return ResponseModel()

@@ -6,9 +6,9 @@ from pathlib import Path
 
 class RouterModel(BaseModel):
     id: str
-    entryPoints: List[str] = ["default-headers"]
+    entryPoints: List[str] = ["web-secure"]
     rule: str
-    middlewares: List[str]
+    middlewares: List[str] = ["default-headers"]
     tls: dict = {}
     service: str
 

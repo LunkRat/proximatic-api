@@ -8,11 +8,9 @@ def tabulate_resources(response: ResponseModel) -> str:
     formatted as a GitHub-flavored markdown table.
     """
     if response.data:
-        # headers = ["type", "id"] + list(response.data[0].attributes.dict().keys())
-        headers = ["type", "id", "endpoint", "server"]
+        headers = ["type", "id"] + list(response.data[0].attributes.dict(exclude={'router', 'services'}).keys())
         tabular = []
         for resource in response.data:
-            # tabular.append([resource.type, resource.id] + list(resource.attributes.dict().values()))
-            tabular.append([resource.type, resource.id, resource.attributes.endpoint, resource.attributes.server])
+            tabular.append([resource.type, resource.id] + list(resource.attributes.dict(exclude={'router', 'service'}).values()))
         table = tabulate(tabular, headers=headers, tablefmt="github")
         return table

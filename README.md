@@ -28,6 +28,15 @@ Use `proximatic --help` for available commands and options.
 
 ```python
 from proximatic import Proximatic
+proximatic = Proximatic(yml_dir='/path/to/your/proximatic/data', fqdn='yourdomain.org')
+```
+
+### JSON REST API interface
+
+You can try out the (experimental) REST API by typing the command:
+
+```bash
+proximatic-http
 ```
 
 ## License

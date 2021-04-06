@@ -33,11 +33,13 @@ proximatic = Proximatic(yml_dir='/path/to/your/proximatic/data', fqdn='yourdomai
 
 ### JSON REST API interface
 
-You can try out the (experimental) REST API by typing the command:
+You can run the (experimental) REST API on your localhost by typing the command:
 
 ```bash
 proximatic-http
 ```
+
+It will try to open your browser to [http://localhost:8000](http://localhost:8000)
 
 ## License
 

@@ -5,6 +5,7 @@ env3.7
 env3.6
 env
 dist
+data
 .mypy_cache
 .idea
 site

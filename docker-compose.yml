@@ -1,0 +1,37 @@
+# For local testing of Proximatic(). Do not attempt to use this on a real server!
+# You need to make an entry in your etc/hosts file like this:
+# 127.0.0.1 *.localhost
+
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/proximatic"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web-secure.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 
+      - ./data:/proximatic:ro
+
+# A whoami service is provided for debugging.
+# Visit http://whoami.localhost
+  whoami:
+    image: "containous/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web-secure"

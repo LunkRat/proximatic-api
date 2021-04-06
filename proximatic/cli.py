@@ -1,6 +1,6 @@
 import typer
 import pprint
-from proximatic import Proximatic
+from proximatic import Proximatic, __version__
 from .utils import tabulate_resources as tabulate_resources
 
 app = typer.Typer()
@@ -14,22 +14,21 @@ pp = pprint.PrettyPrinter(indent=4)
 def callback():
     """
     --------------\n
-    Welcome to Proximatic CLI!\n
+    Proximatic CLI\n
     Interactive command-line interface to Proximatic.\n
     --------------\n
     """
 
 
 @app.command()
-def config_show(path: str = "/data/traefik/conf/"):
-    config = proximatic.system
-    typer.echo(pp.pprint(config.dict()))
+def config_show():
+    typer.echo(pp.pprint(proximatic.system.dict()))
 
 
 @app.command()
-def domain_list(id: str = None):
-    """Returns a list of configured domains."""
-    response = proximatic.domain_list(id)
+def provider_list(id: str = None):
+    """Returns a list of configured providers."""
+    response = proximatic.provider_list(id)
     if response.data:
         table = tabulate_resources(response)
         typer.echo(table)
@@ -38,22 +37,8 @@ def domain_list(id: str = None):
 
 
 @app.command()
-def domain_export(id: str):
-    fetch = proximatic.domain_fetch(id)
-    if len(fetch) != 1:
-        typer.echo("No domins to export.")
-        typer.Abort()
-    else:
-        domain = fetch[0]
-        response = proximatic.domain_export(domain)
-        table = tabulate_resources(response)
-        typer.echo(f"Domain {id} successfully saved:")
-        typer.echo(table)
-
-
-@app.command()
-def domain_create(id: str, server: str):
-    response = proximatic.domain_create(id=id, server=server)
+def provider_create(id: str, server: str):
+    response = proximatic.provider_create(id=id, server=server)
     if response.data:
         typer.echo(
             f"\nSuccessfully created {response.data[0].type} {response.data[0].id}.\n"
@@ -66,6 +51,6 @@ def domain_create(id: str, server: str):
 
 
 @app.command()
-def domain_delete(id: str):
-    response = proximatic.domain_delete(id)
+def provider_delete(id: str):
+    response = proximatic.provider_delete(id)
     typer.echo(pp.pprint(response.dict()))

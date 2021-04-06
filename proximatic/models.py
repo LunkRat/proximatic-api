@@ -5,12 +5,12 @@ from pathlib import Path
 
 
 class RouterModel(BaseModel):
-    """Models proxy router configs attached to Proximatic() domain resources."""
+    """Models proxy router configs attached to Proximatic() provider resources."""
 
     id: str
     entryPoints: List[str] = ["web-secure"]
     rule: str
-    middlewares: List[str] = ["default-headers"]
+    middlewares: List[str] = []
     tls: dict = {}
     service: str
 
@@ -23,13 +23,13 @@ class LoadBalancerModel(BaseModel):
 
 
 class ServiceModel(BaseModel):
-    """Models proxy service configs attached to Proximatic() domain resources."""
+    """Models proxy service configs attached to Proximatic() provider resources."""
 
     loadBalancer: LoadBalancerModel
 
 
-class DomainAttributesModel(BaseModel):
-    """Models the data attributes of a Proximatic() domain resource."""
+class ProviderAttributesModel(BaseModel):
+    """Models the data attributes of a Proximatic() provider resource."""
 
     router: RouterModel
     service: ServiceModel
@@ -79,12 +79,12 @@ class SystemConfigModel(BaseModel):
 
     yml_path: Path
     fqdn: str = "example.com"
-    domains: List[ResourceModel] = []
+    providers: List[ResourceModel] = []
 
 
-class DomainExportModel(BaseModel):
+class ProviderExportModel(BaseModel):
     """
-    Models the exported YAML for domain resource file dumps.
+    Models the exported YAML for provider resource file dumps.
     At export time, models are inserted into the top-level routers, services,
     and middlewares sections of the 'http' dictionary.
     """

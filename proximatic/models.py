@@ -11,7 +11,9 @@ class RouterModel(BaseModel):
     entryPoints: List[str] = ["web-secure"]
     rule: str
     middlewares: List[str] = []
-    tls: dict = {}
+    tls: dict = {
+        "certResolver": "letsencrypt"
+    }
     service: str
 
 

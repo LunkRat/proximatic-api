@@ -26,7 +26,7 @@ class Proximatic:
         elif os.getenv("PROXIMATIC_YML_PATH"):
             yml_path = os.getenv("PROXIMATIC_YML_PATH")
         else:
-            yml_path = "./data"
+            yml_path = "./data/yml"
         yml_path = Path(yml_path)
         if yml_path.exists() and yml_path.is_dir():
             if fqdn:
@@ -69,11 +69,11 @@ class Proximatic:
                         middlewares=config["http"]["routers"][router_id]["middlewares"],
                         service=service_id,
                     )
-                    # Create middlewares declaration as dictionary:
+                    # Create middlewares declaration as dictionary.
                     middlewares = {}
                     for name, configuration in config["http"]["middlewares"].items():
                         middlewares[name] = configuration
-                    # Create our provider attributes instance from our model
+                    # Create our provider attributes instance from our model.
                     # and attach our data.
                     attributes = ProviderAttributesModel(
                         router=router,
@@ -82,7 +82,7 @@ class Proximatic:
                         endpoint=router.rule.split("`")[1],
                         server=service.loadBalancer.servers[0]["url"],
                     )
-
+                    # Create the provider resource from our model, attaching our data.
                     provider = ResourceModel(
                         id=router_id, type="provider", attributes=attributes
                     )

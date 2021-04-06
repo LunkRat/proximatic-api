@@ -14,7 +14,7 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.file.directory=/proximatic"
+      - "--providers.file.directory=/proximatic/yml"
       - "--providers.file.watch=true"
       - "--entrypoints.web-secure.address=:80"
     ports:
@@ -23,8 +23,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # 
-      - ./data:/proximatic:ro
+      - ./data/yml:/proximatic/yml:ro
 
 # A whoami service is provided for debugging.
 # Visit http://whoami.localhost

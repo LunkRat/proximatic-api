@@ -4,7 +4,9 @@ Python API for managing Proximatic configuration files.
 
 When installed, the `proximatic` command provides a CLI for managing Proximatic configuration.
 
-This Python package provides the core for the Proximatic system.
+This Python package provides the core for the Proximatic system. 
+
+If you are looking for the turn-key production deployment of Proximatic, see [https://github.com/LunkRat/proximatic](https://github.com/LunkRat/proximatic).
 
 ## Installation
 
@@ -28,7 +30,7 @@ Use `proximatic --help` for available commands and options.
 
 ```python
 from proximatic import Proximatic
-proximatic = Proximatic(yml_dir='/path/to/your/proximatic/data', fqdn='yourdomain.org')
+proximatic = Proximatic(yml_dir='/path/to/your/proximatic/data', fqdn='example.org')
 ```
 
 ### JSON REST API interface

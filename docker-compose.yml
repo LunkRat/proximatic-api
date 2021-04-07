@@ -1,36 +1,74 @@
-# For local testing of Proximatic(). Do not attempt to use this on a real server!
-# You need to make an entry in your etc/hosts file like this:
-# 127.0.0.1 *.localhost
+# This compose file is for local 
+# Proximatic() developer environments only!
+# DO NOT attempt to use this on a real/public server!
 
-version: "3.3"
+# Traefik dashboard will load from: https://traefik.localhost
+# Traefik proxy will auto-discover any provider defined in ./data/yml
+# All providers you create with proximatic provider-create
+# will be proxied at https://provider-id.localhost
+
+# # Usage
+#
+# Place a wildcard entry for *.localhost 
+# in your local /etc/hosts file, like this:
+#
+# 127.0.0.1 *.localhost
+#
+# Then, start the proxy container with:
+#
+# docker-compose up -d
+#
+
+
+version: "3"
 
 services:
 
   traefik:
     image: "traefik:v2.4"
-    container_name: "traefik"
-    command:
-      - "--log.level=DEBUG"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.file.directory=/proximatic/yml"
-      - "--providers.file.watch=true"
-      - "--entrypoints.web-secure.address=:80"
+    container_name: "proximatic_traefik_dev"
     ports:
       - "80:80"
-      - "8080:8080"
+      - "443:443"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data/yml:/proximatic/yml:ro
-
-# A whoami service is provided for debugging.
-# Visit http://whoami.localhost
-  whoami:
-    image: "containous/whoami"
-    container_name: "simple-service"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./data/yml:/proximatic/yml:ro"
+      - "./data/logs:/logs"
+    command:
+      # Enable Traefik Dashboard
+      - "--api"
+      # EntryPoints are ports that Traefik listens on
+      - "--entrypoints.web-secure.address=:443"
+      - "--entrypoints.web.address=:80"
+      # All requests to entrypoint 'web' are 308 permanent redirected
+      # to https entrypoint 'web-secure'
+      - "--entrypoints.web.http.redirections.entryPoint.to=web-secure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      # Proximatic (file) provider
+      - "--providers.file.directory=/proximatic/yml"
+      - "--providers.file.watch=true"
+      # Docker provider auto-discovers config from labels on other containers
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      # Traefik application log config
+      - "--log.filePath=/logs/traefik.log"
+      - "--log.format=common"
+      - "--log.level=DEBUG"
+      # Traefik access log config
+      - "--accesslog=true"
+      - "--accesslog.filepath=/logs/access.log"
+      - "--accesslog.bufferingsize=100"
+      # Access log field toggles
+      - "--accesslog.fields.defaultmode=keep"
+      - "--accesslog.fields.names.ClientUsername=keep"
+      - "--accesslog.fields.headers.defaultmode=keep"
+      - "--accesslog.fields.headers.names.User-Agent=keep"
+      - "--accesslog.fields.headers.names.Authorization=keep"
+      - "--accesslog.fields.headers.names.Content-Type=keep"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
-      - "traefik.http.routers.whoami.entrypoints=web-secure"
+      - "traefik.http.routers.traefik-api.entrypoints=web-secure"
+      - "traefik.http.routers.traefik-api.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik-api.service=api@internal"
+      - "traefik.http.routers.traefik-api.tls=true"

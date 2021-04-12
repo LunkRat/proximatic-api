@@ -60,7 +60,9 @@ class SystemConfigModel(BaseModel):
     provider: DynamicProviderModel = DynamicProviderModel()
 
 
-class routerModel(BaseModel):
+# Options models.
+
+class routerOptionsModel(BaseModel):
     """Models a router resource."""
 
     entryPoints: List[str] = ["web-secure"]
@@ -80,9 +82,6 @@ class routerModel(BaseModel):
     #   sans:
     #   - foobar
     #   - foobar
-
-
-# Services models (not yet utilized):
 
 
 class loadBalancerOptionsModel(BaseModel):
@@ -132,9 +131,6 @@ class weightedOptionsModel(BaseModel):
     #     secure: true
     #     httpOnly: true
     #     sameSite: foobar
-
-
-# Middleware models (not yet utilized):
 
 
 class addPrefixOptionsModel(BaseModel):
@@ -296,8 +292,9 @@ class stripPrefixRegexOptionsModel(BaseModel):
     regex: List[str]
 
 
-service_models = {"loadBalancer": loadBalancerOptionsModel}
-middleware_models = {
+options_models = {
+    "router": routerOptionsModel,
+    "loadBalancer": loadBalancerOptionsModel,
     "headers": headersOptionsModel,
     "ipWhiteList": ipWhiteListOptionsModel,
     "basicAuth": basicAuthOptionsModel,

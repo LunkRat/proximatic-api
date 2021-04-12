@@ -9,9 +9,7 @@ from .models import (
     ResponseErrorModel,
     ResourceModel,
     ResourceAttributesModel,
-    routerModel,
-    service_models, 
-    middleware_models,
+    options_models
 )
 
 class Proximatic:
@@ -56,12 +54,12 @@ class Proximatic:
             response.error = [error]
             return response
 
-        router = routerModel(
+        router = options_models['router'](
             rule=f"Host(`{resource_id}.{self.config.fqdn}`)",
             service=resource_id,
             middlewares=["proximatic-headers-default"],
         )
-        service = service_models['loadBalancer'](servers=[{"url": service_url}])
+        service = options_models['loadBalancer'](servers=[{"url": service_url}])
         # Insert the model instances into config
         self.config.provider.http['routers'][resource_id] = router
         self.config.provider.http['services'][resource_id] = {
@@ -106,12 +104,12 @@ class Proximatic:
                 if "http" in config:
                     if "routers" in config["http"]:
                         for router_id, options in config["http"]["routers"].items():
-                            router = routerModel(**options)
+                            router = options_models['router'](**options)
                             self.config.provider.http["routers"][router_id] = router
                     if "middlewares" in config["http"]:
                         for middleware_id, options in config["http"]["middlewares"].items():
                             middleware_name = next(iter(options))
-                            middleware = middleware_models[middleware_name](
+                            middleware = options_models[middleware_name](
                                 **options[middleware_name]
                             )
                             self.config.provider.http["middlewares"][middleware_id] = {
@@ -120,7 +118,7 @@ class Proximatic:
                     if "services" in config["http"]:
                         for service_id, options in config["http"]["services"].items():
                             service_name = next(iter(options))
-                            service = service_models[service_name](
+                            service = options_models[service_name](
                                 **options[service_name]
                             )
                             self.config.provider.http["services"][service_id] = {

@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from proximatic import Proximatic, __version__
 
@@ -16,13 +16,12 @@ def read_root():
     return {"Proximatic REST API": __version__}
 
 
-@app.get("/provider/list")
-def provider_list():
+@app.get("/view")
+def resources():
     """Endpoint that returns a list of configured providers."""
-
-    response = proximatic.provider_list()
-
+    response = proximatic.view()
     return response
+
 
 def proximatic_openapi():
     if app.openapi_schema:

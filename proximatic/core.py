@@ -47,7 +47,7 @@ class Proximatic:
 
     def add(self, resource_id: str, service_url: str) -> ResponseModel:
         response = ResponseModel()
-        
+
         if resource_id in self.config.provider.http['routers']:
             error = ResponseErrorModel(
                 error_id="Found",
@@ -67,7 +67,7 @@ class Proximatic:
         self.config.provider.http['services'][resource_id] = {
             "loadBalancer": service
         }
-        self.export_yml()
+        self.export()
         self.ingest()
         # Ensure the model is in config
         if resource_id in self.config.provider.http['routers'] and resource_id in self.config.provider.http['services']:
@@ -85,7 +85,7 @@ class Proximatic:
 
         return response
 
-    def export_yml(self) -> ResponseModel:
+    def export(self) -> ResponseModel:
         file_path = self.config.yml_path.joinpath(
             "proximatic.config.provider.file.yml"
         )
@@ -128,7 +128,7 @@ class Proximatic:
                             }
 
 
-    def show(self, type: str=None) -> ResponseModel:
+    def view(self, type: str=None) -> ResponseModel:
         response = ResponseModel(
             data=[]
         )

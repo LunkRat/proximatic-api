@@ -21,8 +21,8 @@ def callback():
 
 
 @app.command()
-def show():
-    response = proximatic.show()
+def view():
+    response = proximatic.view()
     if response.data:
         table = tabulate_resources(response)
         typer.echo(table)

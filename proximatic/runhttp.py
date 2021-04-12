@@ -1,7 +1,5 @@
-import os
 import typer
 import uvicorn
-from .restapi import app as app
 
 
 def http():
@@ -10,14 +8,6 @@ def http():
     For local development only! Production deployment should use the containerized stack.
     """
 
-    if is_docker():
-        typer.echo(
-            """
-        You appear to be running proximatic-http from a Docker container. 
-        Make sure this is not your production container. 
-        Type Y to launch uvicorn on localhost:8000.
-        """
-        )
     # Launch a web browser on localhost open to the api endpoint.
     # @see https://typer.tiangolo.com/tutorial/launch/
 
@@ -34,13 +24,4 @@ def http():
         port=8000,
         reload=True,  # For development. Watches for file changes and reloads the server hot.
         log_level="debug",
-    )
-
-
-def is_docker():
-    path = "/proc/self/cgroup"
-    return (
-        os.path.exists("/.dockerenv")
-        or os.path.isfile(path)
-        and any("docker" in line for line in open(path))
     )

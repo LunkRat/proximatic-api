@@ -43,7 +43,7 @@ class Proximatic:
     def get_fqdn(self):
         return self.config.fqdn
 
-    def add(self, resource_id: str, service_url: str) -> ResponseModel:
+    def create(self, resource_id: str, service_url: str) -> ResponseModel:
         response = ResponseModel()
 
         if resource_id in self.config.provider.http['routers']:
@@ -83,6 +83,14 @@ class Proximatic:
 
         return response
 
+    def delete(self, type: str, id: str):
+        if id in self.config.provider.http['routers']:
+            del self.config.provider.http['routers'][id]
+            del self.config.provider.http['services'][id]
+            self.export()
+        return ResponseModel()
+
+
     def export(self) -> ResponseModel:
         file_path = self.config.yml_path.joinpath(
             "proximatic.config.provider.file.yml"
@@ -104,8 +112,10 @@ class Proximatic:
                 if "http" in config:
                     if "routers" in config["http"]:
                         for router_id, options in config["http"]["routers"].items():
-                            router = options_models['router'](**options)
-                            self.config.provider.http["routers"][router_id] = router
+                            # Validate that the router references a service that exists in the ingest.
+                            if options['service'] in config["http"]["services"]:
+                                router = options_models['router'](**options)
+                                self.config.provider.http["routers"][router_id] = router
                     if "middlewares" in config["http"]:
                         for middleware_id, options in config["http"]["middlewares"].items():
                             middleware_name = next(iter(options))

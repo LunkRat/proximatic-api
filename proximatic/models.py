@@ -63,7 +63,7 @@ class SystemConfigModel(BaseModel):
 # Options models.
 
 class routerOptionsModel(BaseModel):
-    """Models a router resource."""
+    """Models all router options fields."""
 
     entryPoints: List[str] = ["web-secure"]
     middlewares: List[str] = []
@@ -85,6 +85,8 @@ class routerOptionsModel(BaseModel):
 
 
 class loadBalancerOptionsModel(BaseModel):
+    """Models all available options for the 'loadBalancer' service type."""
+
     sticky: dict = None
     # cookie: dict
     #     name: str
@@ -110,6 +112,7 @@ class loadBalancerOptionsModel(BaseModel):
 
 
 class mirroringOptionsModel(BaseModel):
+    """Models all available options for the 'mirroring' service type."""
     service: str
     maxBodySize: int
     mirrors: List[dict]
@@ -120,6 +123,8 @@ class mirroringOptionsModel(BaseModel):
 
 
 class weightedOptionsModel(BaseModel):
+    """Models all available options for the 'weighted' service type."""
+
     services: List[dict]
     # - name: foobar
     #   weight: 42
@@ -291,7 +296,8 @@ class stripPrefixOptionsModel(BaseModel):
 class stripPrefixRegexOptionsModel(BaseModel):
     regex: List[str]
 
-
+# Store the models in a dict so that they can be
+# instantiated automatically during file ingest.
 options_models = {
     "router": routerOptionsModel,
     "loadBalancer": loadBalancerOptionsModel,

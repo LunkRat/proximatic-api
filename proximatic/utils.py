@@ -11,17 +11,10 @@ def tabulate_resources(response: ResponseModel) -> str:
         headers = ["type", "id", "router_rule", "middlewares", "service_url"]
         tabular = []
         for resource in response.data:
-            # host_rule = resource.attributes.routers[resource.id].rule  # .split("`")[1]
-            # server_url = resource.attributes.services[resource.id][
-            #     "loadBalancer"
-            # ].servers[0]["url"]
-            # middlewares = ", ".join(
-            #     resource.attributes.routers[resource.id].middlewares
-            # )
             tabular.append(
                 [
                     resource.type,
-                    resource.id,
+                    resource.resource_id,
                     resource.attributes.router_rule,
                     " ,".join(resource.attributes.middlewares),
                     resource.attributes.service_url,

@@ -12,7 +12,6 @@ from .models import (
     routerModel,
     service_models, 
     middleware_models,
-    loadBalancerServiceModel
 )
 
 class Proximatic:
@@ -46,25 +45,49 @@ class Proximatic:
     def get_fqdn(self):
         return self.config.fqdn
 
-    def create(self, id: str, server: str) -> ResponseModel:
+    def add(self, resource_id: str, service_url: str) -> ResponseModel:
         response = ResponseModel()
+        
+        if resource_id in self.config.provider.http['routers']:
+            error = ResponseErrorModel(
+                error_id="Found",
+                detail="we need a better error system."
+            )
+            response.error = [error]
+            return response
+
         router = routerModel(
-            rule=f"Host(`{id}.{self.config.fqdn}`)",
-            service=id,
-            middlewares=["proximatic-headers"],
+            rule=f"Host(`{resource_id}.{self.config.fqdn}`)",
+            service=resource_id,
+            middlewares=["proximatic-headers-default"],
         )
-        service = loadBalancerServiceModel(servers=[{"url": server}])
-        provider = ProviderAttributesModel(
-            routers={id: router}, services={id: {"loadBalancer": service}}
-        )
-        resource = ResourceModel(id=id, type="provider", attributes=provider)
+        service = service_models['loadBalancer'](servers=[{"url": service_url}])
+        # Insert the model instances into config
+        self.config.provider.http['routers'][resource_id] = router
+        self.config.provider.http['services'][resource_id] = {
+            "loadBalancer": service
+        }
         self.export_yml()
         self.ingest()
+        # Ensure the model is in config
+        if resource_id in self.config.provider.http['routers'] and resource_id in self.config.provider.http['services']:
+            attributes = ResourceAttributesModel(
+                router_rule=router.rule, # .split("`")[1],
+                service_url=self.config.provider.http['services'][resource_id]['loadBalancer'].servers[0]['url'],
+                middlewares=router.middlewares
+            )
+            resource = ResourceModel(
+                type="resource",
+                resource_id=resource_id,
+                attributes=attributes
+            )
+            response.data = [resource]
+
         return response
 
     def export_yml(self) -> ResponseModel:
         file_path = self.config.yml_path.joinpath(
-            f"proximatic.config.provider.file.yml"
+            "proximatic.config.provider.file.yml"
         )
         with open(file_path, "wt") as yml_stream:
             yml_stream.write(
@@ -109,7 +132,7 @@ class Proximatic:
         response = ResponseModel(
             data=[]
         )
-        for router, options in self.config.provider.http['routers'].items():
+        for router_id, options in self.config.provider.http['routers'].items():
             attributes = ResourceAttributesModel(
                 router_rule=options.rule, # .split("`")[1],
                 service_url=self.config.provider.http['services'][options.service]['loadBalancer'].servers[0]['url'],
@@ -117,7 +140,7 @@ class Proximatic:
             )
             resource = ResourceModel(
                 type="resource",
-                id=router,
+                resource_id=router_id,
                 attributes=attributes
             )
             response.data.append(resource)

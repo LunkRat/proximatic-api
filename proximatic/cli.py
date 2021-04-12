@@ -30,18 +30,18 @@ def show():
         typer.echo(response.error)
 
 
-# @app.command()
-# def create(id: str, server: str):
-#     response = proximatic.create(id=id, server=server)
-#     if response.data:
-#         typer.echo(
-#             f"\nSuccessfully created {response.data[0].type} {response.data[0].id}.\n"
-#         )
-#         table = tabulate_resources(response)
-#         typer.echo(table)
-#     else:
-#         if response.error:
-#             typer.echo(pp.pprint(response.error[0].dict()))
+@app.command()
+def add(resource_id: str, service_url: str):
+    response = proximatic.add(resource_id=resource_id, service_url=service_url)
+    if response.data:
+        typer.echo(
+            f"\nSuccessfully created {response.data[0].type} {response.data[0].resource_id}.\n"
+        )
+        table = tabulate_resources(response)
+        typer.echo(table)
+    else:
+        if response.error:
+            typer.echo(pp.pprint(response.error[0].dict()))
 
 
 @app.command()

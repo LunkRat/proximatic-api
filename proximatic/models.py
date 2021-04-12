@@ -3,44 +3,17 @@ from pydantic import BaseModel
 from pydantic.generics import GenericModel
 from pathlib import Path
 
-
-class RouterModel(BaseModel):
-    """Models proxy router configs attached to Proximatic() provider resources."""
-
-    id: str
-    entryPoints: List[str] = ["web-secure"]
-    rule: str
-    middlewares: List[str] = []
-    tls: dict = {
-        "certResolver": "letsencrypt"
-    }
-    service: str
+OptionsModelType = TypeVar("OptionsModelType")
 
 
-class LoadBalancerModel(BaseModel):
-    """Models proxy loadBalancer settings inside of proxy service configs."""
-
-    servers: List[dict] = [{"url": ""}]
-    passHostHeader: bool = False
-
-
-class ServiceModel(BaseModel):
-    """Models proxy service configs attached to Proximatic() provider resources."""
-
-    loadBalancer: LoadBalancerModel
-
-
-class ProviderAttributesModel(BaseModel):
-    """Models the data attributes of a Proximatic() provider resource."""
-
-    router: RouterModel
-    service: ServiceModel
-    middlewares: dict
-    endpoint: str
-    server: str
+class ResourceAttributesModel(BaseModel):
+    router_rule: str = None
+    middlewares: list = None
+    service_url: str = None
 
 
 AttributesModelType = TypeVar("AttributesModelType")
+
 
 class ResourceModel(GenericModel, Generic[AttributesModelType]):
     """Models any resource in the Proximatic().system resources stores.
@@ -49,8 +22,10 @@ class ResourceModel(GenericModel, Generic[AttributesModelType]):
 
     id: str
     type: str
-    attributes: AttributesModelType  # an attributes object representing some of the resource’s data.
-    meta: Dict[str, str] = {}
+    attributes: OptionsModelType = (
+        None  # an attributes object representing some of the resource’s data.
+    )
+    meta: Dict[str, str] = None
 
 
 class ResponseErrorModel(BaseModel):
@@ -76,19 +51,260 @@ class ResponseModel(BaseModel):
     meta: Optional[Dict[str, str]]
 
 
+class DynamicProviderModel(BaseModel):
+
+    http: Dict[str, dict] = {"routers": {}, "services": {}, "middlewares": {}}
+    tls: Dict[str, dict] = None
+    udp: Dict[str, dict] = None
+
+
 class SystemConfigModel(BaseModel):
     """Models the entire Proximatic().system configuration store."""
 
     yml_path: Path
     fqdn: str = "example.com"
-    providers: List[ResourceModel] = []
+    provider: DynamicProviderModel = DynamicProviderModel()
 
 
-class ProviderExportModel(BaseModel):
-    """
-    Models the exported YAML for provider resource file dumps.
-    At export time, models are inserted into the top-level routers, services,
-    and middlewares sections of the 'http' dictionary.
-    """
+class routerModel(BaseModel):
+    """Models a router resource."""
 
-    http: Dict[str, dict] = {"routers": {}, "services": {}, "middlewares": {}}
+    entryPoints: List[str] = ["web-secure"]
+    middlewares: List[str] = []
+    service: str
+    rule: str
+    priority: int = None
+    tls: dict = {"certResolver": "letsencrypt"}
+    # options: foobar
+    # certResolver: foobar
+    # domains:
+    # - main: foobar
+    #   sans:
+    #   - foobar
+    #   - foobar
+    # - main: foobar
+    #   sans:
+    #   - foobar
+    #   - foobar
+
+
+# Services models (not yet utilized):
+
+
+class loadBalancerServiceModel(BaseModel):
+    sticky: dict = None
+    # cookie: dict
+    #     name: str
+    #     secure: bool
+    #     httpOnly: bool
+    #     sameSite: str
+    servers: List[dict] = [{"url": ""}]
+    healthCheck: dict = None
+    # scheme: str
+    # path: str
+    # port: int
+    # interval: str
+    # timeout: str
+    # hostname: str
+    # followRedirects: bool
+    # headers:
+    #     name0: str
+    #     name1: str
+    passHostHeader: bool = False
+    responseForwarding: dict = None
+    # flushInterval: str
+    serversTransport: str = None
+
+
+class mirroringServiceModel(BaseModel):
+    service: str
+    maxBodySize: int
+    mirrors: List[dict]
+    # - name: foobar
+    #   percent: 42
+    # - name: foobar
+    #   percent: 42
+
+
+class weightedServiceModel(BaseModel):
+    services: List[dict]
+    # - name: foobar
+    #   weight: 42
+    # - name: foobar
+    #   weight: 42
+    sticky: dict
+    #   cookie:
+    #     name: foobar
+    #     secure: true
+    #     httpOnly: true
+    #     sameSite: foobar
+
+
+# Middleware models (not yet utilized):
+
+
+class addPrefixMiddlewareModel(BaseModel):
+    prefix: str
+
+
+class basicAuthMiddlewareModel(BaseModel):
+    users: List[str] = None
+    usersFile: str = None
+    realm: str = None
+    removeHeader: bool = None
+    headerField: str = None
+
+
+class bufferingMiddlewareModel(BaseModel):
+    maxRequestBodyBytes: int
+    memRequestBodyBytes: int
+    maxResponseBodyBytes: int
+    memResponseBodyBytes: int
+    retryExpression: str
+
+
+class chainModel:
+    middlewares: List[str]
+
+
+class circuitBreakerModel(BaseModel):
+    expression: str
+
+
+class compressMiddlewareModel(BaseModel):
+    excludedContentTypes: List[str]
+
+
+class contentTypeModel(BaseModel):
+    autoDetect: bool
+
+
+class digestAuthMiddlewareModel(BaseModel):
+    users: List[str]
+    usersFile: str
+    removeHeader: bool
+    realm: str
+    headerField: str
+
+
+class errorsMiddlewareModel(BaseModel):
+    status: List[str]
+    service: str
+    query: str
+
+
+class forwardAuthMiddlewareModel(BaseModel):
+    address: str
+    # !! dict type ##
+    tls: dict
+    trustForwardHeader: bool
+    authResponseHeaders: List[str]
+    authResponseHeadersRegex: str
+    authRequestHeaders: List[str]
+
+
+class headersMiddlewareModel(BaseModel):
+    customRequestHeaders: Dict[str, str] = None
+    customResponseHeaders: Dict[str, str] = None
+    accessControlAllowCredentials: bool = None
+    accessControlAllowHeaders: List[str] = None
+    accessControlAllowMethods: List[str] = None
+    accessControlAllowOrigin: str = None
+    accessControlAllowOriginList: List[str] = None
+    accessControlAllowOriginListRegex: List[str] = None
+    accessControlExposeHeaders: List[str] = None
+    accessControlMaxAge: int = None
+    addVaryHeader: bool = None
+    allowedHosts: List[str] = None
+    hostsProxyHeaders: List[str] = None
+    sslRedirect: bool = True
+    sslTemporaryRedirect: bool = None
+    sslHost: str = None
+    sslProxyHeaders: Dict[str, str] = None
+    sslForceHost: bool = None
+    stsSeconds: int = None
+    stsIncludeSubdomains: bool = True
+    stsPreload: bool = True
+    forceSTSHeader: bool = True
+    frameDeny: bool = True
+    customFrameOptionsValue: str = None
+    contentTypeNosniff: bool = True
+    browserXssFilter: bool = True
+    customBrowserXSSValue: str = None
+    contentSecurityPolicy: str = None
+    publicKey: str = None
+    referrerPolicy: str = None
+    featurePolicy: str = None
+    isDevelopment: bool = None
+
+
+class ipWhiteListMiddlewareModel(BaseModel):
+    sourceRange: List[str]
+    ## dict type!!
+    ipStrategy: dict = None
+    #   depth: int
+    #   excludedIPs: List[str] # could probably do type validation with ip/cdir types
+
+
+class inFlightReqModel(BaseModel):
+    amount: int
+    ## dict type!!
+    sourceCriterion: dict
+
+
+class rateLimitMiddlewareModel(BaseModel):
+    average: int
+    period: int
+    burst: int
+    ## dict type!!
+    sourceCriterion: dict
+    # ipStrategy:
+    #   depth: int
+    #   excludedIPs:
+    #   - str
+    #   - str
+    # requestHeaderName: str
+    # requestHost: bool
+
+
+class redirectRegexMiddlewareModel(BaseModel):
+    regex: str
+    replacement: str
+    permanent: bool
+
+
+class redirectSchemeMiddlewareModel(BaseModel):
+    scheme: str
+    port: str
+    permanent: bool
+
+
+class replacePathMiddlewareModel(BaseModel):
+    path: str
+
+
+class replacePathRegexMiddlewareModel(BaseModel):
+    regex: str
+    replacement: str
+
+
+class retryMiddlewareModel(BaseModel):
+    attempts: int
+    initialInterval: int
+
+
+class stripPrefixMiddlewareModel(BaseModel):
+    prefixes: List[str]
+    forceSlash: bool
+
+
+class stripPrefixRegexMiddlewareModel(BaseModel):
+    regex: List[str]
+
+
+service_models = {"loadBalancer": loadBalancerServiceModel}
+middleware_models = {
+    "headers": headersMiddlewareModel,
+    "ipWhiteList": ipWhiteListMiddlewareModel,
+    "basicAuth": basicAuthMiddlewareModel,
+}
